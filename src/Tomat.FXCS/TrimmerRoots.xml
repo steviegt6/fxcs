@@ -1,0 +1,5 @@
+﻿<linker>
+    <assembly fullname="Tomat.FXCS">
+        <type fullname="Tomat.FXCS.*" preserve="all"/>
+    </assembly>
+</linker>
