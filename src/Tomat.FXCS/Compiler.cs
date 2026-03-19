@@ -185,6 +185,8 @@ public static unsafe class Compiler
         using var inc = BuildIncludeHandler(opts);
         using var mac = new MacroPinner(opts.Macros);
 
+        inc.AddSearchPath(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
+
         ID3DBlob* code = null;
         ID3DBlob* errors = null;
 
@@ -275,6 +277,8 @@ public static unsafe class Compiler
 
             using var inc = BuildIncludeHandler(opts);
             using var mac = new MacroPinner(opts.Macros);
+
+            inc.AddSearchPath(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
 
             ID3DBlob* errors = null;
 
