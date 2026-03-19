@@ -6,6 +6,12 @@ using System.Runtime.InteropServices;
 
 namespace Tomat.FXCS;
 
+public enum D3DIncludeType : uint
+{
+    Local = 0,  // #include "file"
+    System = 1, // #include <file>
+}
+
 public sealed unsafe class IncludeHandler : IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -13,12 +19,12 @@ public sealed unsafe class IncludeHandler : IDisposable
     {
         public delegate* unmanaged[Stdcall]<
             NativeInstance*,
-            uint,   // IncludeType
-            byte*,  // pFileName
-            void*,  // pParentData
-            void**, // ppData
-            uint*,  // pBytes
-            int>    // HRESULT
+            D3DIncludeType, // IncludeType
+            byte*,          // pFileName
+            void*,          // pParentData
+            void**,         // ppData
+            uint*,          // pBytes
+            int>            // HRESULT
             Open;
 
         public delegate* unmanaged[Stdcall]<
@@ -42,10 +48,19 @@ public sealed unsafe class IncludeHandler : IDisposable
 
     private static readonly ID3DIncludeVtbl* vtbl;
 
-    // Tracks buffers handed out to d3dcompiler that have not yet been Close()d.
-    private readonly Dictionary<nint, nint> openBuffers = []; // ppData value -> GCHandle
+    // Pinned buffers handed to d3dcompiler, keyed by pointer so Close() can
+    // release the GCHandle.
+    private readonly Dictionary<nint, nint> openBuffers = [];
 
-    private readonly List<string> searchPaths = [];
+    // Explicit paths added via /I, searched for both local and system includes
+    // after the directory stack is exhausted.
+    private readonly List<string> systemPaths = [];
+
+    // Stack of directories of currently-open include files.
+    // Bottom = directory of the top-level source file (set by the caller).
+    // Each successful Open() pushes; each Close() pops.
+    private readonly Stack<string> dirStack = new();
+
     private bool disposed;
 
     private NativeInstance* nativeInstance;
@@ -71,6 +86,32 @@ public sealed unsafe class IncludeHandler : IDisposable
     ///     The raw pointer passed to D3DCompile2 / D3DPreprocess as pInclude.
     /// </summary>
     public void* NativePtr => nativeInstance;
+
+    /// <summary>
+    ///     Sets the directory of the top-level source file.
+    ///     <br />
+    ///     Call this once before each compilation that uses this handler.
+    /// </summary>
+    public void SetSourceFileDirectory(string directory)
+    {
+        dirStack.Clear();
+        if (!string.IsNullOrEmpty(directory))
+        {
+            dirStack.Push(directory);
+        }
+    }
+
+    /// <summary>
+    /// Adds a path that's searched for system includes and as a fallback for
+    /// local includes not found on the directory stack.  Corresponds to /I.
+    /// </summary>
+    public void AddSystemPath(string path)
+    {
+        if (!string.IsNullOrEmpty(path))
+        {
+            systemPaths.Add(path);
+        }
+    }
 
     public void Dispose()
     {
@@ -102,15 +143,10 @@ public sealed unsafe class IncludeHandler : IDisposable
         }
     }
 
-    public void AddSearchPath(string path)
-    {
-        searchPaths.Add(path);
-    }
-
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
     private static int NativeOpen(
         NativeInstance* self,
-        uint includeType,
+        D3DIncludeType includeType,
         byte* pFileNameUtf8,
         void* pParentData,
         void** ppData,
@@ -118,7 +154,7 @@ public sealed unsafe class IncludeHandler : IDisposable
     )
     {
         var handler = (IncludeHandler)GCHandle.FromIntPtr(self->gcHandleCookie).Target!;
-        return handler.Open(pFileNameUtf8, ppData, pBytes);
+        return handler.Open(includeType, pFileNameUtf8, ppData, pBytes);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
@@ -128,42 +164,51 @@ public sealed unsafe class IncludeHandler : IDisposable
         return handler.Close(pData);
     }
 
-    private int Open(byte* pFileNameUtf8, void** ppData, uint* pBytes)
+    private int Open(D3DIncludeType includeType, byte* pFileName, void** ppData, uint* pBytes)
     {
         const int s_ok = 0;
-        const int e_fail = unchecked((int)0x80004005);
+        const int error_file_not_found = 0x00000002;
 
-        var fileName = Marshal.PtrToStringUTF8((nint)pFileNameUtf8) ?? string.Empty;
+        // d3dcompiler passes an ANSI (CP_ACP) string, not UTF-8.
+        var fileName = Marshal.PtrToStringAnsi((nint)pFileName) ?? string.Empty;
 
-        foreach (var dir in searchPaths)
+        // Normalize separators so paths from Wine/Unix environments resolve.
+        if (fileName.Contains('/'))
         {
-            var fullPath = string.IsNullOrEmpty(dir)
-                ? fileName
-                : Path.Combine(dir, fileName);
+            fileName = fileName.Replace('/', '\\');
+        }
 
-            if (!File.Exists(fullPath))
+        string? foundDir;
+        if (includeType == D3DIncludeType.Local)
+        {
+            // Walk the directory stack from the most-recently opened file
+            // outward to the top-level source directory.
+            foreach (var dir in dirStack)
             {
-                continue;
-            }
-
-            try
-            {
-                var data = File.ReadAllBytes(fullPath);
-                // Pin the array and record the handle so Close() can free it.
-                var pin = GCHandle.Alloc(data, GCHandleType.Pinned);
-                var ptr = (void*)pin.AddrOfPinnedObject();
-                openBuffers[(nint)ptr] = GCHandle.ToIntPtr(pin);
-                *ppData = ptr;
-                *pBytes = (uint)data.Length;
-                return s_ok;
-            }
-            catch
-            {
-                // Try the next path.
+                if (TryReadFile(dir, fileName, ppData, pBytes, out foundDir))
+                {
+                    goto found;
+                }
             }
         }
 
-        return e_fail;
+        // For system includes, or local includes not found on the stack,
+        // try each explicitly added search path.
+        foreach (var path in systemPaths)
+        {
+            if (TryReadFile(path, fileName, ppData, pBytes, out foundDir))
+            {
+                goto found;
+            }
+        }
+
+        return error_file_not_found;
+
+    found:
+        // Push the resolved file's directory so its own nested includes
+        // resolve relative to it.
+        dirStack.Push(foundDir!);
+        return s_ok;
     }
 
     private int Close(void* pData)
@@ -174,6 +219,55 @@ public sealed unsafe class IncludeHandler : IDisposable
             GCHandle.FromIntPtr(cookie).Free();
         }
 
+        // Pop the directory we pushed when this file was opened.
+        if (dirStack.Count > 0)
+        {
+            dirStack.Pop();
+        }
+
         return s_ok;
+    }
+
+    /// <summary>
+    ///     Tries to find and read <paramref name="fileName"/> under
+    ///     <paramref name="directory"/>.  On success, pins the buffer, writes
+    ///     ppData/pBytes, records the pin handle, and returns the file's
+    ///     containing directory via <paramref name="fileDirectory"/>.
+    /// </summary>
+    private bool TryReadFile(
+        string directory,
+        string fileName,
+        void** ppData,
+        uint* pBytes,
+        out string? fileDirectory
+    )
+    {
+        fileDirectory = null;
+        var fullPath = Path.Combine(directory, fileName);
+
+        if (!File.Exists(fullPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            var data = File.ReadAllBytes(fullPath);
+
+            var pin = GCHandle.Alloc(data, GCHandleType.Pinned);
+            var ptr = (void*)pin.AddrOfPinnedObject();
+
+            openBuffers[(nint)ptr] = GCHandle.ToIntPtr(pin);
+            *ppData = ptr;
+            *pBytes = (uint)data.Length;
+
+            fileDirectory = Path.GetDirectoryName(fullPath) ?? directory;
+            return true;
+        }
+        catch (Exception)
+        {
+            // IO errors, permissions problems, etc. — try the next path.
+            return false;
+        }
     }
 }

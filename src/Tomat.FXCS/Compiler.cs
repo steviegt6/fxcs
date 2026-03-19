@@ -185,7 +185,7 @@ public static unsafe class Compiler
         using var inc = BuildIncludeHandler(opts);
         using var mac = new MacroPinner(opts.Macros);
 
-        inc.AddSearchPath(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
+        inc.SetSourceFileDirectory(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
 
         ID3DBlob* code = null;
         ID3DBlob* errors = null;
@@ -244,7 +244,11 @@ public static unsafe class Compiler
         return 0;
     }
 
-    public static int Compile(string inFile, Options opts, TextWriter errorSink)
+    public static int Compile(
+        string inFile,
+        Options opts,
+        TextWriter errorSink
+    )
     {
         ID3DBlob* code = null;
 
@@ -278,7 +282,7 @@ public static unsafe class Compiler
             using var inc = BuildIncludeHandler(opts);
             using var mac = new MacroPinner(opts.Macros);
 
-            inc.AddSearchPath(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
+            inc.SetSourceFileDirectory(Path.GetDirectoryName(Path.GetFullPath(inFile))!);
 
             ID3DBlob* errors = null;
 
@@ -955,7 +959,7 @@ public static unsafe class Compiler
         var includeHandler = new IncludeHandler();
         foreach (var p in opts.IncludePaths)
         {
-            includeHandler.AddSearchPath(p);
+            includeHandler.AddSystemPath(p);
         }
 
         return includeHandler;

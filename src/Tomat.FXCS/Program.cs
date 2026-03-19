@@ -56,8 +56,6 @@ internal static class Program
                 return 1;
             }
 
-            opts.IncludePaths.Insert(0, Directory.GetCurrentDirectory());
-
             return Dispatch(opts, errorSink);
         }
         finally
