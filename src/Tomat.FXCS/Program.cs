@@ -51,7 +51,10 @@ internal static class Program
 
         try
         {
-            // TODO: validate opts
+            if (!Validator.Validate(opts))
+            {
+                return 1;
+            }
 
             opts.IncludePaths.Insert(0, Directory.GetCurrentDirectory());
 
