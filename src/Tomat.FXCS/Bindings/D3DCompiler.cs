@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Tomat.FXCS.Bindings;
 
@@ -171,15 +172,20 @@ public unsafe struct ID3DBlob
             len--;
         }
 
-        return System.Text.Encoding.UTF8.GetString(ptr, len);
+        return Encoding.UTF8.GetString(ptr, len);
     }
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct D3DShaderMacro
+public unsafe struct D3DShaderMacro
 {
+    /*
     public Lpcstr Name;
     public Lpcstr Definition;
+    */
+
+    public byte* Name;
+    public byte* Definition;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -188,10 +194,7 @@ public unsafe struct D3DShaderData
     public void* BytecodePtr;
     public nuint BytecodeLength;
 
-    public Span<byte> Bytecode
-    {
-        get { return new(BytecodePtr, (int)BytecodeLength); }
-    }
+    public Span<byte> Bytecode => new(BytecodePtr, (int)BytecodeLength);
 }
 #endregion
 
@@ -265,10 +268,10 @@ public static unsafe class D3DCompiler
 
     public static delegate* unmanaged[Stdcall]<nuint, ID3DBlob**, int>
         CreateBlob { get; private set; }
-    
+
     /// <summary>
-    /// Loads the first available d3dcompiler DLL and resolves all entry points.
-    /// Returns false and writes to stderr if loading fails.
+    ///     Loads the first available d3dcompiler DLL and resolves all entry points.
+    ///     Returns false and writes to stderr if loading fails.
     /// </summary>
     public static bool Load()
     {

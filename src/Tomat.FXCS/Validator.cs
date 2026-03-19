@@ -4,7 +4,7 @@ using Tomat.FXCS.Bindings;
 namespace Tomat.FXCS;
 
 /// <summary>
-///     Validates <see cref="Options"/>.
+///     Validates <see cref="Options" />.
 /// </summary>
 public static class Validator
 {

@@ -58,13 +58,47 @@ internal static class Program
 
             opts.IncludePaths.Insert(0, Directory.GetCurrentDirectory());
 
-            // TODO dispatch;
-            return 0;
+            return Dispatch(opts, errorSink);
         }
         finally
         {
             errorFile?.Flush();
             errorFile?.Dispose();
+        }
+    }
+
+    private static int Dispatch(Options opts, TextWriter errorSink)
+    {
+        if (opts.Compress)
+        {
+            return Compiler.Compress(opts, errorSink);
+        }
+
+        if (opts.Decompress)
+        {
+            return Compiler.Decompress(opts, errorSink);
+        }
+
+        if (opts.PreprocessOnly)
+        {
+            var rc = 0;
+            foreach (var f in opts.InputFiles)
+            {
+                rc |= Compiler.Preprocess(f, opts, errorSink);
+            }
+
+            return rc;
+        }
+
+        // Regular compilation.
+        {
+            var rc = 0;
+            foreach (var f in opts.InputFiles)
+            {
+                rc |= Compiler.Compile(f, opts, errorSink);
+            }
+
+            return rc;
         }
     }
 }

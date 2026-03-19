@@ -6,16 +6,16 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        
+
         <AssemblyName>fxc</AssemblyName>
-        
+
         <!--
             NativeAOT publishing:
                 dotnet publish -r win-x64 -c Release /p:PublishAot = true
         -->
         <PublishAot>true</PublishAot>
         <TrimmerRootDescriptor>TrimmerRoots.xml</TrimmerRootDescriptor>
-        
+
         <!-- Disable features that bloat AOT binaries and are unused here. -->
         <InvariantGlobalization>false</InvariantGlobalization>
         <UseSystemResourceKeys>true</UseSystemResourceKeys>

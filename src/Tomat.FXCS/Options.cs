@@ -93,13 +93,10 @@ public sealed class Options
     /// <summary>
     ///     True when the target does not use an explicit entry point.
     /// </summary>
-    public bool TargetHasNoEntryPoint
-    {
-        get { return TargetKind is TargetKind.Effects or TargetKind.Library or TargetKind.RootSig; }
-    }
+    public bool TargetHasNoEntryPoint => TargetKind is TargetKind.Effects or TargetKind.Library or TargetKind.RootSig;
 
     /// <summary>
-    ///     Builds <see cref="D3DDisassembleFlags"/> from the display options.
+    ///     Builds <see cref="D3DDisassembleFlags" /> from the display options.
     /// </summary>
     public D3DDisassembleFlags DisassembleFlags
     {
@@ -132,7 +129,7 @@ public sealed class Options
 }
 
 /// <summary>
-///     Parses out command line options into an <see cref="Options"/> object.
+///     Parses out command line options into an <see cref="Options" /> object.
 /// </summary>
 public static class OptionsParser
 {
@@ -142,10 +139,7 @@ public static class OptionsParser
         private int pos;
         private readonly ReadOnlySpan<string> tokens = tokens;
 
-        public bool HasMore
-        {
-            get { return pos < tokens.Length; }
-        }
+        public bool HasMore => pos < tokens.Length;
 
         public string? Peek()
         {
@@ -176,10 +170,10 @@ public static class OptionsParser
     }
 
     /// <summary>
-    ///     Parses <paramref name="args"/> into <paramref name="opts"/>.
+    ///     Parses <paramref name="args" /> into <paramref name="opts" />.
     ///     <br />
-    ///     Returns <see langword="false"/> on a fatal parse error, or throws
-    ///     <see cref="HelpRequestedException"/> when <c>/?</c> or <c>/help</c>
+    ///     Returns <see langword="false" /> on a fatal parse error, or throws
+    ///     <see cref="HelpRequestedException" /> when <c>/?</c> or <c>/help</c>
     ///     are encountered.
     /// </summary>
     public static bool Parse(string[] args, Options opts)
@@ -917,7 +911,7 @@ public static class OptionsParser
 
     /// <summary>
     ///     Extracts a parameter value from either the remainder of the current
-    ///     token (after <paramref name="offset"/>) or from the next token.
+    ///     token (after <paramref name="offset" />) or from the next token.
     ///     <br />
     ///     Handles optional ':' separator.
     /// </summary>
@@ -952,9 +946,9 @@ public static class OptionsParser
     }
 
     /// <summary>
-    /// Matches a long option that takes a parameter.
-    /// The parameter may follow immediately after the name (with optional ':'),
-    /// or be the next token.
+    ///     Matches a long option that takes a parameter.
+    ///     The parameter may follow immediately after the name (with optional ':'),
+    ///     or be the next token.
     /// </summary>
     private static bool TryGetLongParam(
         ReadOnlySpan<char> sw,
