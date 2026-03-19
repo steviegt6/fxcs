@@ -9,6 +9,7 @@ internal static class Usage
         Usage: fxc <options> <files>
 
            /?, /help           print this message
+           
            /T <profile>        target profile
            /E <name>           entrypoint name
            /I <include>        additional include path
@@ -105,11 +106,13 @@ internal static class Usage
         """;
 
     private const string shim_compiler_version = "10.1";
+    private static readonly string assembly_version = typeof(Usage).Assembly.GetName().Version!.ToString();
 
     public static void PrintBanner(string compilerPath)
     {
-        Console.WriteLine($"Microsoft (R) Direct3D Shader Compiler {shim_compiler_version} (using {compilerPath})");
+        // Console.WriteLine($"Microsoft (R) Direct3D Shader Compiler {shim_compiler_version} (using {compilerPath})");
         // Console.WriteLine("Copyright (C) 2013 Microsoft. All rights reserved.");
+        Console.WriteLine($"Tomat.FXCS {assembly_version} (reimplementing Microsoft (R) Direct3D Shader Compiler {shim_compiler_version}) (using {compilerPath})");
         Console.WriteLine("Copyright (C) 2026  Tomat et al.");
         Console.WriteLine();
     }

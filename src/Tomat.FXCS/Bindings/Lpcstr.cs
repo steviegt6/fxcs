@@ -6,9 +6,15 @@ namespace Tomat.FXCS.Bindings;
 [StructLayout(LayoutKind.Sequential)]
 public struct Lpcstr : IDisposable
 {
-    public readonly bool IsNull => data == nint.Zero;
+    public readonly bool IsNull
+    {
+        get { return data == nint.Zero; }
+    }
 
-    internal readonly string? DebugDisplayString => IsNull ? null : Marshal.PtrToStringAnsi(data);
+    internal readonly string? DebugDisplayString
+    {
+        get { return IsNull ? null : Marshal.PtrToStringAnsi(data); }
+    }
 
     private nint data;
 
@@ -47,9 +53,15 @@ public struct Lpcstr : IDisposable
 [StructLayout(LayoutKind.Sequential)]
 public struct Lpcwstr : IDisposable
 {
-    public readonly bool IsNull => data == nint.Zero;
+    public readonly bool IsNull
+    {
+        get { return data == nint.Zero; }
+    }
 
-    internal readonly string? DebugDisplayString => IsNull ? null : Marshal.PtrToStringUni(data);
+    internal readonly string? DebugDisplayString
+    {
+        get { return IsNull ? null : Marshal.PtrToStringUni(data); }
+    }
 
     private nint data;
 

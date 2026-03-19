@@ -188,7 +188,10 @@ public unsafe struct D3DShaderData
     public void* BytecodePtr;
     public nuint BytecodeLength;
 
-    public Span<byte> Bytecode => new(BytecodePtr, (int)BytecodeLength);
+    public Span<byte> Bytecode
+    {
+        get { return new(BytecodePtr, (int)BytecodeLength); }
+    }
 }
 #endregion
 
