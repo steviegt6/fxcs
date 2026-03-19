@@ -109,8 +109,8 @@ internal static class Usage
     public static void PrintBanner(string compilerPath)
     {
         Console.WriteLine($"Microsoft (R) Direct3D Shader Compiler {shim_compiler_version} (using {compilerPath})");
-        Console.WriteLine("Copyright (C) 2013 Microsoft. All rights reserved.");
-        Console.WriteLine("Copyright (C) 2026 Tomat");
+        // Console.WriteLine("Copyright (C) 2013 Microsoft. All rights reserved.");
+        Console.WriteLine("Copyright (C) 2026  Tomat et al.");
         Console.WriteLine();
     }
 
