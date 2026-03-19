@@ -24,4 +24,10 @@
         <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Update="d3dcompiler_47.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>
