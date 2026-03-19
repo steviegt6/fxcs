@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -205,6 +207,8 @@ public static unsafe class D3DCompiler
     // The name of whichever DLL was actually loaded, for diagnostics.
     public static string? LoadedDllName { get; private set; }
 
+    public static string? LoadedDllPath { get; private set; }
+
     public static delegate* unmanaged[Stdcall]<
         void*, nuint,           // pSrcData, SrcDataSize
         byte*,                  // pSourceName
@@ -258,7 +262,7 @@ public static unsafe class D3DCompiler
 
     public static delegate* unmanaged[Stdcall]<nuint, ID3DBlob**, int>
         CreateBlob { get; private set; }
-
+    
     /// <summary>
     /// Loads the first available d3dcompiler DLL and resolves all entry points.
     /// Returns false and writes to stderr if loading fails.
@@ -277,6 +281,14 @@ public static unsafe class D3DCompiler
             break;
         }
 
+        var moduleCollection = Process.GetCurrentProcess().Modules;
+        var modules = new ProcessModule[moduleCollection.Count];
+        {
+            moduleCollection.CopyTo(modules, 0);
+        }
+
+        LoadedDllPath = modules.FirstOrDefault(x => x.ModuleName.Equals(LoadedDllName, StringComparison.OrdinalIgnoreCase))?.FileName ?? LoadedDllName;
+
         if (handle == 0)
         {
             Console.Error.WriteLine(
@@ -286,7 +298,7 @@ public static unsafe class D3DCompiler
             return false;
         }
 
-        Console.Error.WriteLine($"fxc: using {LoadedDllName}");
+        // Console.Error.WriteLine($"fxc: using {LoadedDllName}");
 
         // | instead of || to take note of all missing exports instead of just
         // the first failure.
