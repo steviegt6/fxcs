@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Tomat.FXCS.Bindings;
+namespace Tomat.FXCS;
 
 #region Enums
 [Flags]

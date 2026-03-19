@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Tomat.FXCS.Bindings;
 
 namespace Tomat.FXCS;
 

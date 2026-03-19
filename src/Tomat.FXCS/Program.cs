@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using Tomat.FXCS.Bindings;
 
 namespace Tomat.FXCS;
 
