@@ -941,7 +941,7 @@ public static unsafe class Compiler
     {
         try
         {
-            var data = File.ReadAllBytes(path);
+            var data = ModifyIncomingFileData(File.ReadAllText(path));
             size = data.Length;
             return data;
         }
@@ -973,5 +973,14 @@ public static unsafe class Compiler
         }
         bytes[len] = 0;
         return bytes;
+    }
+
+    internal static byte[] ModifyIncomingFileData(string data)
+    {
+        // Reinterpret as raw ASCII.  We don't make any real changes to the file
+        // yet, but this reinterpretation at the very least fixes issues with
+        // the UTF-8 BOM.
+
+        return Encoding.ASCII.GetBytes(data);
     }
 }

@@ -252,7 +252,7 @@ public sealed unsafe class IncludeHandler : IDisposable
 
         try
         {
-            var data = File.ReadAllBytes(fullPath);
+            var data = Compiler.ModifyIncomingFileData(File.ReadAllText(fullPath));
 
             var pin = GCHandle.Alloc(data, GCHandleType.Pinned);
             var ptr = (void*)pin.AddrOfPinnedObject();
