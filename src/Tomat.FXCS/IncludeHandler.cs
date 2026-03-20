@@ -243,7 +243,7 @@ public sealed unsafe class IncludeHandler : IDisposable
     )
     {
         fileDirectory = null;
-        var fullPath = Path.Combine(directory, fileName);
+        var fullPath = Path.GetFullPath(Path.Combine(directory, fileName));
 
         if (!File.Exists(fullPath))
         {

@@ -19,7 +19,7 @@ public static unsafe class Compiler
 
         foreach (var f in opts.InputFiles)
         {
-            var data = ReadFileOrDie(f, out _);
+            var data = ReadFile(f);
             if (data is null)
             {
                 return 1;
@@ -87,7 +87,7 @@ public static unsafe class Compiler
     public static int Decompress(Options opts, TextWriter errorSink)
     {
         var srcFile = opts.InputFiles[0];
-        var src = ReadFileOrDie(srcFile, out _);
+        var src = ReadFile(srcFile);
         if (src is null)
         {
             return 1;
@@ -175,7 +175,7 @@ public static unsafe class Compiler
         TextWriter errorSink
     )
     {
-        var src = ReadFileOrDie(inFile, out _);
+        var src = ReadFile(inFile);
         if (src is null)
         {
             return 1;
@@ -254,7 +254,7 @@ public static unsafe class Compiler
         if (opts.DumpBin)
         {
             // /dumpbin: read pre-compiled blob directly, wrap in an ID3DBlob.
-            var raw = ReadFileOrDie(inFile, out _);
+            var raw = ReadFile(inFile);
             if (raw is null)
             {
                 return 1;
@@ -272,7 +272,7 @@ public static unsafe class Compiler
         else
         {
             // Normal compilation.
-            var src = ReadFileOrDie(inFile, out _);
+            var src = ReadFile(inFile);
             if (src is null)
             {
                 return 1;
@@ -353,7 +353,7 @@ public static unsafe class Compiler
         // /setrootsignature
         if (opts.SetRootSig is not null)
         {
-            var rsData = ReadFileOrDie(opts.SetRootSig, out _);
+            var rsData = ReadFile(opts.SetRootSig);
             if (rsData is null)
             {
                 return 1;
@@ -438,7 +438,7 @@ public static unsafe class Compiler
         // /setprivate
         if (opts.SetPrivate is not null)
         {
-            var privData = ReadFileOrDie(opts.SetPrivate, out _);
+            var privData = ReadFile(opts.SetPrivate);
             if (privData is null)
             {
                 errorSink.WriteLine(
@@ -937,18 +937,15 @@ public static unsafe class Compiler
     ///     <br />
     ///     Writes an error message and returns null on failure.
     /// </summary>
-    private static byte[]? ReadFileOrDie(string path, out long size)
+    private static byte[]? ReadFile(string path)
     {
         try
         {
-            var data = ModifyIncomingFileData(File.ReadAllText(path));
-            size = data.Length;
-            return data;
+            return ModifyIncomingFileData(File.ReadAllText(Path.GetFullPath(path)));
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"fxc: failed to open file: {path} ({ex.Message})");
-            size = 0;
             return null;
         }
     }
