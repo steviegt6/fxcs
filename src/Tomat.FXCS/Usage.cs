@@ -106,7 +106,7 @@ internal static class Usage
         """;
 
     private const string shim_compiler_version = "10.1";
-    private static readonly string assembly_version = typeof(Usage).Assembly.GetName().Version!.ToString();
+    private static readonly string assembly_version = typeof(Usage).Assembly.GetName().Version!.ToString(fieldCount: 3);
 
     public static void PrintBanner(string compilerPath)
     {
