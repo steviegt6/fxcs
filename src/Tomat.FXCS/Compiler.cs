@@ -922,13 +922,10 @@ public static unsafe class Compiler
 
         // The blob is null-terminated UTF-8.
         var ptr = (byte*)errors->GetBufferPointer();
-        var len = (int)sz;
-        if (ptr[len - 1] == 0)
-        {
-            len--;
-        }
+        // var len = (int)sz;
 
-        sink.Write(Encoding.UTF8.GetString(ptr, len));
+        var msg = Marshal.PtrToStringAnsi((nint)ptr)!.TrimEnd('\r', '\n');
+        sink.WriteLine(msg);
         sink.Flush();
     }
 
