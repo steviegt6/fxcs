@@ -920,9 +920,12 @@ public static unsafe class Compiler
             return;
         }
 
-        // The blob is null-terminated UTF-8.
+        // I was encountering some (possibly alignment?) issues where the
+        // returned blob had an extra byte after the null terminator.  I wasn't
+        // able to determine exactly why, but let's just read up to the null
+        // terminator like normal (even though it's a little slower).  This is
+        // more in line with C: printf("%s", errors->GetBufferPointer());
         var ptr = (byte*)errors->GetBufferPointer();
-        // var len = (int)sz;
 
         var msg = Marshal.PtrToStringAnsi((nint)ptr)!.TrimEnd('\r', '\n');
         sink.WriteLine(msg);
